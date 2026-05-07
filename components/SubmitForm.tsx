@@ -29,10 +29,9 @@ export default function SubmitForm() {
   const [articleLink, setArticleLink] = useState('');
   const [accessCode, setAccessCode] = useState('');
 
+  // Cover: fetched silently, never shown as a field
   const [coverUrl, setCoverUrl] = useState('');
-  const [coverOverride, setCoverOverride] = useState('');
   const [coverLoading, setCoverLoading] = useState(false);
-  const [coverFailed, setCoverFailed] = useState(false);
   const [canonicalTitle, setCanonicalTitle] = useState<string | null>(null);
   const [canonicalAuthor, setCanonicalAuthor] = useState<string | null>(null);
   const [coverSuggestions, setCoverSuggestions] = useState<Suggestion[]>([]);
@@ -43,12 +42,12 @@ export default function SubmitForm() {
 
   const debounce = useRef<ReturnType<typeof setTimeout>>();
 
+  // Silently fetch cover + canonical name whenever title or medium changes
   useEffect(() => {
-    if (!title || !medium || coverOverride) return;
+    if (!title || !medium) return;
     clearTimeout(debounce.current);
     debounce.current = setTimeout(async () => {
       setCoverLoading(true);
-      setCoverFailed(false);
       setCoverUrl('');
       setCanonicalTitle(null);
       setCanonicalAuthor(null);
@@ -57,27 +56,22 @@ export default function SubmitForm() {
         const params = new URLSearchParams({ title, medium });
         const res = await fetch(`/api/cover?${params}`);
         const data = await res.json();
-        if (data.url) {
-          setCoverUrl(data.url);
-        } else {
-          setCoverFailed(true);
-        }
+        if (data.url) setCoverUrl(data.url);
         setCanonicalTitle(data.canonicalTitle ?? null);
         setCanonicalAuthor(data.canonicalAuthor ?? null);
         setCoverSuggestions(data.suggestions ?? []);
       } catch {
-        setCoverFailed(true);
+        // cover is optional — silent failure is fine
       } finally {
         setCoverLoading(false);
       }
     }, 800);
     return () => clearTimeout(debounce.current);
-  }, [title, medium, coverOverride]);
+  }, [title, medium]);
 
   function applySuggestion(s: Suggestion) {
     setTitle(s.title);
     if (s.author) setAuthor(s.author);
-    setCoverOverride('');
     setCanonicalTitle(null);
     setCanonicalAuthor(null);
     setCoverSuggestions([]);
@@ -89,13 +83,12 @@ export default function SubmitForm() {
     );
   }
 
-  const displayCover = coverOverride || coverUrl;
   const noteCount = countSentences(note);
 
   const titleDiffers =
     !coverLoading &&
-    canonicalTitle &&
-    title.trim() &&
+    canonicalTitle !== null &&
+    title.trim().length > 0 &&
     canonicalTitle.toLowerCase() !== title.toLowerCase().trim();
 
   function validate(): boolean {
@@ -131,7 +124,7 @@ export default function SubmitForm() {
           author: author.trim(),
           medium,
           category: categories,
-          cover_image: coverOverride.trim() || coverUrl || null,
+          cover_image: coverUrl || null,
           timelessness_note: note.trim(),
           contributor_name: contributorName.trim() || 'Anonymous',
           article_link: articleLink.trim() || null,
@@ -154,9 +147,8 @@ export default function SubmitForm() {
   function resetForm() {
     setTitle(''); setAuthor(''); setMedium(''); setCategories([]);
     setNote(''); setContributorName(''); setArticleLink(''); setAccessCode('');
-    setCoverUrl(''); setCoverOverride(''); setCoverFailed(false);
-    setCanonicalTitle(null); setCanonicalAuthor(null); setCoverSuggestions([]);
-    setErrors({}); setSuccess(false);
+    setCoverUrl(''); setCanonicalTitle(null); setCanonicalAuthor(null);
+    setCoverSuggestions([]); setErrors({}); setSuccess(false);
   }
 
   if (success) {
@@ -182,33 +174,63 @@ export default function SubmitForm() {
         </div>
       )}
 
-      {/* Title + Author */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label className={LABEL}>Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter title…"
-            className={FIELD}
-          />
-          {errors.title && <p className={ERR}>{errors.title}</p>}
-        </div>
-        <div>
-          <label className={LABEL}>Author / Director / Creator</label>
-          <input
-            type="text"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Enter name…"
-            className={FIELD}
-          />
-          {errors.author && <p className={ERR}>{errors.author}</p>}
-        </div>
+      {/* 1. Title */}
+      <div>
+        <label className={LABEL}>Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter title…"
+          className={FIELD}
+        />
+        {errors.title && <p className={ERR}>{errors.title}</p>}
+
+        {/* Typo suggestions — appear once title+medium resolve against the API */}
+        {titleDiffers && (
+          <p className="mt-1.5 text-xs text-text-muted">
+            Did you mean{' '}
+            <button
+              type="button"
+              onClick={() => applySuggestion({ title: canonicalTitle!, author: canonicalAuthor ?? undefined })}
+              className="text-copper hover:underline"
+            >
+              &ldquo;{canonicalTitle}&rdquo;
+            </button>
+            {canonicalAuthor && ` by ${canonicalAuthor}`}?
+          </p>
+        )}
+        {!coverLoading && !titleDiffers && coverSuggestions.length > 0 && (
+          <div className="mt-1.5 text-xs text-text-muted space-y-0.5">
+            <span>Did you mean: </span>
+            {coverSuggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => applySuggestion(s)}
+                className="block text-copper hover:underline text-left"
+              >
+                &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Medium */}
+      {/* 2. Author */}
+      <div>
+        <label className={LABEL}>Author / Director / Creator</label>
+        <input
+          type="text"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          placeholder="Enter name…"
+          className={FIELD}
+        />
+        {errors.author && <p className={ERR}>{errors.author}</p>}
+      </div>
+
+      {/* 3. Medium */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className={LABEL}>Medium</label>
@@ -228,93 +250,11 @@ export default function SubmitForm() {
         </div>
       </div>
 
-      {/* Cover Image */}
-      <div>
-        <label className={LABEL}>Cover Image</label>
-        <div className="flex gap-5">
-          <div className="w-20 h-28 bg-input border border-[rgba(240,236,228,0.15)] flex-shrink-0 flex items-center justify-center overflow-hidden">
-            {coverLoading ? (
-              <span className="text-[10px] text-text-muted text-center px-1">Fetching…</span>
-            ) : displayCover ? (
-              <img src={displayCover} alt="Cover preview" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[10px] text-text-muted text-center px-1 leading-tight">
-                {coverFailed ? 'Not found' : 'Auto-fetched'}
-              </span>
-            )}
-          </div>
-          <div className="flex-1 space-y-2">
-            <p className="text-xs text-text-muted leading-relaxed">
-              Cover is auto-fetched from Open Library (books) or TMDB (film/TV) when you enter a
-              title and medium.
-            </p>
-
-            {/* Did you mean — title differs from canonical */}
-            {titleDiffers && (
-              <p className="text-xs text-text-muted">
-                Did you mean{' '}
-                <button
-                  type="button"
-                  onClick={() =>
-                    applySuggestion({
-                      title: canonicalTitle!,
-                      author: canonicalAuthor ?? undefined,
-                    })
-                  }
-                  className="text-copper hover:underline"
-                >
-                  &ldquo;{canonicalTitle}&rdquo;
-                </button>
-                {canonicalAuthor && ` by ${canonicalAuthor}`}?
-              </p>
-            )}
-
-            {/* Did you mean — cover not found, show alternatives */}
-            {!coverLoading && coverFailed && coverSuggestions.length > 0 && (
-              <div className="text-xs text-text-muted space-y-0.5">
-                <p>Did you mean:</p>
-                {coverSuggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => applySuggestion(s)}
-                    className="block text-copper hover:underline text-left"
-                  >
-                    &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {(coverFailed || displayCover) && (
-              <div>
-                <input
-                  type="url"
-                  value={coverOverride}
-                  onChange={(e) => setCoverOverride(e.target.value)}
-                  placeholder="Override with a custom image URL…"
-                  className={`${FIELD} text-xs`}
-                />
-                {coverOverride && (
-                  <button
-                    type="button"
-                    onClick={() => setCoverOverride('')}
-                    className="mt-1.5 text-[11px] text-text-muted hover:text-copper transition-colors"
-                  >
-                    Clear override
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Categories — multi-select toggle pills */}
+      {/* 4. Category — multi-select toggle pills */}
       <div>
         <label className={LABEL}>
           Category{' '}
-          <span className="text-text-muted normal-case tracking-normal">(select all that apply)</span>
+          <span className="normal-case tracking-normal">(select all that apply)</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((cat) => {
@@ -338,12 +278,12 @@ export default function SubmitForm() {
         {errors.category && <p className={ERR}>{errors.category}</p>}
       </div>
 
-      {/* Combined note */}
+      {/* 5. Why it belongs here */}
       <div>
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2">
           <div>
-            <p className="text-sm text-text leading-snug">Why does this belong here?</p>
-            <p className="text-sm text-text-muted leading-snug">
+            <label className={`${LABEL} mb-0`}>Why it belongs here</label>
+            <p className="text-xs text-text-muted mt-1">
               What human moment does it prepare someone for?
             </p>
           </div>
@@ -352,7 +292,7 @@ export default function SubmitForm() {
               noteCount >= 2 ? 'text-copper' : 'text-text-muted'
             }`}
           >
-            {noteCount} / 2 sentences
+            {noteCount} / 2 min
           </span>
         </div>
         <textarea
@@ -365,12 +305,12 @@ export default function SubmitForm() {
         {errors.note && <p className={ERR}>{errors.note}</p>}
       </div>
 
-      {/* Optional fields */}
+      {/* 6 + 7. Optional fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className={LABEL}>
             Your Name{' '}
-            <span className="text-text-muted normal-case tracking-normal">(optional)</span>
+            <span className="normal-case tracking-normal">(optional)</span>
           </label>
           <input
             type="text"
@@ -383,7 +323,7 @@ export default function SubmitForm() {
         <div>
           <label className={LABEL}>
             Article Link{' '}
-            <span className="text-text-muted normal-case tracking-normal">(optional)</span>
+            <span className="normal-case tracking-normal">(optional)</span>
           </label>
           <input
             type="url"
@@ -396,7 +336,7 @@ export default function SubmitForm() {
         </div>
       </div>
 
-      {/* Access Code */}
+      {/* 8. Access Code */}
       <div>
         <label className={LABEL}>Access Code</label>
         <input
