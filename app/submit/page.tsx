@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import SubmitForm from '@/components/SubmitForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Submit an Entry',
 };
