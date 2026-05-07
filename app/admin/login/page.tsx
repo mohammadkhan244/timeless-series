@@ -24,7 +24,6 @@ export default function AdminLoginPage() {
         setError(data.error || 'Invalid password');
       } else {
         router.push('/admin');
-        router.refresh();
       }
     } catch {
       setError('Network error. Please try again.');

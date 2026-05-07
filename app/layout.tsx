@@ -27,7 +27,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="bg-bg text-text min-h-screen font-sans">
+      <body
+        className="bg-bg text-text min-h-screen font-sans"
+        style={{ backgroundColor: '#0a0a0a', color: '#f0ece4' }}
+      >
         <nav className="border-b border-border sticky top-0 z-50 bg-bg/95 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-14">
