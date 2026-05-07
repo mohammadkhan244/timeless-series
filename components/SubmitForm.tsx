@@ -219,6 +219,9 @@ export default function SubmitForm() {
         {errors.medium && <p className={ERR}>{errors.medium}</p>}
       </div>
 
+      {/* Fields 2–8: locked until medium is chosen */}
+      <div className={`space-y-8 transition-opacity duration-300 ${!medium ? 'opacity-30 pointer-events-none select-none' : ''}`}>
+
       {/* 2. Title — with "Did you mean" suggestions right below */}
       <div>
         <label className={LABEL}>Title</label>
@@ -437,6 +440,8 @@ export default function SubmitForm() {
         />
         {errors.accessCode && <p className={ERR}>{errors.accessCode}</p>}
       </div>
+
+      </div>{/* end locked fields */}
 
       <button
         type="submit"
