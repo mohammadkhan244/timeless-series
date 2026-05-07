@@ -51,7 +51,7 @@ export default async function EntryPage({ params }: Props) {
         ← Gallery
       </Link>
 
-      <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-[260px,1fr] gap-8 sm:gap-12">
+      <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8 sm:gap-12">
         {/* Left: cover + meta */}
         <div className="flex flex-col gap-5">
           <div className="w-full max-w-[260px] aspect-[2/3] bg-surface-2 border border-border overflow-hidden">
