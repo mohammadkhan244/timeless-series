@@ -173,7 +173,7 @@ export default function AdminPanel() {
                         <span className="text-[10px] uppercase tracking-widest text-copper/70 border border-copper/20 px-1.5 py-0.5">
                           {MEDIUM_LABELS[entry.medium]}
                         </span>
-                        <span className="text-[11px] text-text-muted">{entry.category}</span>
+                        <span className="text-[11px] text-text-muted">{entry.category.join(', ')}</span>
                       </div>
                       <p className="text-[11px] text-text-muted mt-1">
                         By {entry.contributor_name} · {formatDate(entry.created_at)}
@@ -242,18 +242,20 @@ export default function AdminPanel() {
                 <div className="mt-4 pt-4 border-t border-border space-y-4 ml-14">
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-copper/60 mb-1.5">
-                      Why It&apos;s Timeless
+                      Why It Belongs Here
                     </p>
                     <p className="text-sm text-text-muted leading-relaxed">
                       {entry.timelessness_note}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-copper/60 mb-1.5">
-                      The Human Moment
-                    </p>
-                    <p className="text-sm text-text-muted leading-relaxed">{entry.human_moment}</p>
-                  </div>
+                  {entry.human_moment && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-copper/60 mb-1.5">
+                        The Human Moment
+                      </p>
+                      <p className="text-sm text-text-muted leading-relaxed">{entry.human_moment}</p>
+                    </div>
+                  )}
                   {entry.article_link && (
                     <a
                       href={entry.article_link}

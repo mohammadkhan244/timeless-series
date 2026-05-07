@@ -43,7 +43,10 @@ export default function EntryCard({ entry }: { entry: Entry }) {
           </h3>
           <p className="text-xs text-text-muted leading-snug">{entry.author}</p>
           <p className="text-[11px] text-copper/70 uppercase tracking-wide leading-tight">
-            {entry.category}
+            {entry.category[0]}
+            {entry.category.length > 1 && (
+              <span className="text-text-muted"> +{entry.category.length - 1}</span>
+            )}
           </p>
           <div className="mt-auto pt-3 border-t border-border">
             <p className="text-[11px] text-text-muted">

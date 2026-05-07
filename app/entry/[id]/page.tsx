@@ -75,9 +75,13 @@ export default async function EntryPage({ params }: Props) {
                 {MEDIUM_LABELS[entry.medium]}
               </span>
             </div>
-            <p className="text-[11px] uppercase tracking-wide text-text-muted">
-              {entry.category}
-            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {entry.category.map((cat) => (
+                <span key={cat} className="text-[11px] uppercase tracking-wide text-text-muted">
+                  {cat}
+                </span>
+              ))}
+            </div>
             <p className="text-xs text-text-muted">
               Contributed by{' '}
               <span className="text-text">{entry.contributor_name}</span>
@@ -113,19 +117,22 @@ export default async function EntryPage({ params }: Props) {
 
           <section className="space-y-3">
             <h2 className="text-[10px] uppercase tracking-widest text-copper">
-              Why It&apos;s Timeless
+              Why It Belongs Here
             </h2>
             <p className="text-text leading-relaxed text-base">{entry.timelessness_note}</p>
           </section>
 
-          <div className="border-t border-border" />
-
-          <section className="space-y-3">
-            <h2 className="text-[10px] uppercase tracking-widest text-copper">
-              The Human Moment
-            </h2>
-            <p className="text-text leading-relaxed text-base">{entry.human_moment}</p>
-          </section>
+          {entry.human_moment && (
+            <>
+              <div className="border-t border-border" />
+              <section className="space-y-3">
+                <h2 className="text-[10px] uppercase tracking-widest text-copper">
+                  The Human Moment
+                </h2>
+                <p className="text-text leading-relaxed text-base">{entry.human_moment}</p>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </div>

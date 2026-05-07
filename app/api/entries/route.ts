@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     category,
     cover_image,
     timelessness_note,
-    human_moment,
     contributor_name,
     article_link,
     access_code,
@@ -40,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid access code' }, { status: 401 });
   }
 
-  if (!title?.trim() || !author?.trim() || !medium || !category || !timelessness_note?.trim() || !human_moment?.trim()) {
+  if (!title?.trim() || !author?.trim() || !medium || !category || !timelessness_note?.trim()) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
@@ -48,20 +47,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid medium' }, { status: 400 });
   }
 
-  if (!(CATEGORIES as readonly string[]).includes(category)) {
+  const categoryArray: string[] = Array.isArray(category) ? category : [category];
+  if (categoryArray.length === 0) {
+    return NextResponse.json({ error: 'Select at least one category' }, { status: 400 });
+  }
+  if (!categoryArray.every((c) => (CATEGORIES as readonly string[]).includes(c))) {
     return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
   }
 
-  if (countSentences(timelessness_note) < 3) {
+  if (countSentences(timelessness_note) < 2) {
     return NextResponse.json(
-      { error: 'Timelessness note must contain at least 3 sentences' },
-      { status: 400 }
-    );
-  }
-
-  if (countSentences(human_moment) < 2) {
-    return NextResponse.json(
-      { error: 'Human moment must contain at least 2 sentences' },
+      { error: 'Note must contain at least 2 sentences' },
       { status: 400 }
     );
   }
@@ -76,10 +72,10 @@ export async function POST(request: Request) {
       title: title.trim(),
       author: author.trim(),
       medium,
-      category,
+      category: categoryArray,
       cover_image: cover_image?.trim() || null,
       timelessness_note: timelessness_note.trim(),
-      human_moment: human_moment.trim(),
+      human_moment: null,
       contributor_name: contributor_name?.trim() || 'Anonymous',
       article_link: article_link?.trim() || null,
       status: 'pending',

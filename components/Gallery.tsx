@@ -14,7 +14,7 @@ export default function Gallery({ entries }: { entries: Entry[] }) {
   const filtered = useMemo(() => {
     return entries
       .filter((e) => {
-        if (category && e.category !== category) return false;
+        if (category && !e.category.includes(category as import('@/lib/types').Category)) return false;
         if (medium && e.medium !== medium) return false;
         if (search.trim()) {
           const s = search.toLowerCase();

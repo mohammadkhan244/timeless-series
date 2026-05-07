@@ -17,7 +17,7 @@ export interface Entry {
   title: string;
   author: string;
   medium: Medium;
-  category: Category;
+  category: Category[];
   cover_image: string | null;
   timelessness_note: string;
   human_moment: string;
