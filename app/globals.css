@@ -71,6 +71,10 @@ select option {
 ::-webkit-scrollbar-thumb { background: #333; }
 ::-webkit-scrollbar-thumb:hover { background: #b87333; }
 
+/* ── Hide scrollbar but keep scrollability (pill rows on mobile) ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ── Native select arrow ── */
 select {
   -webkit-appearance: none;

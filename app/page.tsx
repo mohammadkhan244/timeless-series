@@ -14,9 +14,9 @@ export default async function HomePage() {
   const entries = (data as Entry[]) || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-      <div className="mb-14 max-w-xl">
-        <h1 className="font-serif text-4xl sm:text-5xl text-text leading-tight mb-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
+      <div className="mb-8 sm:mb-14 max-w-xl">
+        <h1 className="font-serif text-3xl sm:text-5xl text-text leading-tight mb-3">
           The Timeless Series
         </h1>
         <p className="text-text-muted leading-relaxed">

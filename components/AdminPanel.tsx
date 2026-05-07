@@ -163,7 +163,7 @@ export default function AdminPanel() {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-serif text-text text-sm leading-tight truncate">
                         {entry.title}
@@ -181,20 +181,20 @@ export default function AdminPanel() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-shrink-0 sm:justify-end">
                       {entry.status === 'pending' && (
                         <>
                           <button
                             onClick={() => updateStatus(entry.id, 'approved')}
                             disabled={updating === entry.id}
-                            className="text-[11px] px-3 py-1.5 bg-copper text-bg hover:bg-copper-light transition-colors disabled:opacity-40"
+                            className="text-[11px] px-3 py-2 bg-copper text-bg hover:bg-copper-light transition-colors disabled:opacity-40"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => updateStatus(entry.id, 'rejected')}
                             disabled={updating === entry.id}
-                            className="text-[11px] px-3 py-1.5 bg-transparent text-red-400 border border-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                            className="text-[11px] px-3 py-2 bg-transparent text-red-400 border border-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40"
                           >
                             Reject
                           </button>

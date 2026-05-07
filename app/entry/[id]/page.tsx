@@ -42,7 +42,7 @@ export default async function EntryPage({ params }: Props) {
   if (!entry) notFound();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <Link
         href="/"
         className="text-xs uppercase tracking-widest text-text-muted hover:text-copper transition-colors"
@@ -50,7 +50,7 @@ export default async function EntryPage({ params }: Props) {
         ← Gallery
       </Link>
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-[260px,1fr] gap-12">
+      <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-[260px,1fr] gap-8 sm:gap-12">
         {/* Left: cover + meta */}
         <div className="flex flex-col gap-5">
           <div className="w-full max-w-[260px] aspect-[2/3] bg-surface-2 border border-border overflow-hidden">

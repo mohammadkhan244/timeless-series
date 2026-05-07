@@ -32,7 +32,8 @@ export default function FilterBar({
   resultCount,
 }: Props) {
   return (
-    <div className="space-y-4 mb-10">
+    <div className="space-y-3 mb-10">
+      {/* Search */}
       <input
         type="text"
         value={search}
@@ -41,40 +42,39 @@ export default function FilterBar({
         className="w-full bg-input border border-[rgba(240,236,228,0.15)] text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/50 transition-colors"
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Medium pills */}
-        <div className="flex items-center gap-1.5">
+      {/* Medium pills — always a single scrollable row */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+        <button
+          onClick={() => onMediumChange('')}
+          className={`text-[11px] px-3 py-2 uppercase tracking-widest border transition-colors whitespace-nowrap flex-shrink-0 ${
+            medium === ''
+              ? 'border-copper text-copper'
+              : 'border-border text-text-muted hover:border-copper/40 hover:text-text'
+          }`}
+        >
+          All
+        </button>
+        {MEDIUMS.map((m) => (
           <button
-            onClick={() => onMediumChange('')}
-            className={`text-[11px] px-3 py-1.5 uppercase tracking-widest border transition-colors ${
-              medium === ''
-                ? 'border-copper text-copper'
+            key={m}
+            onClick={() => onMediumChange(medium === m ? '' : m)}
+            className={`text-[11px] px-3 py-2 uppercase tracking-widest border transition-colors whitespace-nowrap flex-shrink-0 ${
+              medium === m
+                ? 'border-copper text-copper bg-copper/10'
                 : 'border-border text-text-muted hover:border-copper/40 hover:text-text'
             }`}
           >
-            All
+            {MEDIUM_DISPLAY[m]}
           </button>
-          {MEDIUMS.map((m) => (
-            <button
-              key={m}
-              onClick={() => onMediumChange(medium === m ? '' : m)}
-              className={`text-[11px] px-3 py-1.5 uppercase tracking-widest border transition-colors ${
-                medium === m
-                  ? 'border-copper text-copper bg-copper/10'
-                  : 'border-border text-text-muted hover:border-copper/40 hover:text-text'
-              }`}
-            >
-              {MEDIUM_DISPLAY[m]}
-            </button>
-          ))}
-        </div>
+        ))}
+      </div>
 
-        <div className="w-px h-4 bg-border hidden sm:block" />
-
+      {/* Category + Sort + Count — wraps on mobile */}
+      <div className="flex items-center gap-3 flex-wrap">
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
+          className="flex-1 min-w-0 bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-2 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((c) => (
@@ -87,13 +87,13 @@ export default function FilterBar({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as 'newest' | 'oldest')}
-          className="bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
+          className="bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-2 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
         >
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
         </select>
 
-        <span className="text-xs text-text-muted ml-auto">
+        <span className="text-xs text-text-muted ml-auto whitespace-nowrap">
           {resultCount} {resultCount === 1 ? 'entry' : 'entries'}
         </span>
       </div>
