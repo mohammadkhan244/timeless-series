@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import type { Entry } from '@/lib/types';
+import ContributionSection from '@/components/ContributionSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -133,6 +134,8 @@ export default async function EntryPage({ params }: Props) {
               </section>
             </>
           )}
+
+          <ContributionSection entryId={entry.id} />
         </div>
       </div>
     </div>

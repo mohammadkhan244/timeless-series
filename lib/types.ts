@@ -12,6 +12,14 @@ export type Category =
   | 'How to Stay Alive Inside'
   | 'How to Face Power & Injustice';
 
+export interface Contribution {
+  id: string;
+  entry_id: string;
+  note: string;
+  contributor_name: string;
+  created_at: string;
+}
+
 export interface Entry {
   id: string;
   title: string;
