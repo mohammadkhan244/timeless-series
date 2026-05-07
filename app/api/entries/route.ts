@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       category: categoryArray,
       cover_image: cover_image?.trim() || null,
       timelessness_note: timelessness_note.trim(),
-      human_moment: null,
+      human_moment: '',
       contributor_name: contributor_name?.trim() || 'Anonymous',
       article_link: article_link?.trim() || null,
       status: 'pending',
