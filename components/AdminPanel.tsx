@@ -20,7 +20,7 @@ function formatDate(iso: string) {
 
 export default function AdminPanel({ adminKey }: { adminKey?: string }) {
   const router = useRouter();
-  const adminHeaders = adminKey ? { 'X-Admin-Key': adminKey } : {};
+  const adminHeaders: Record<string, string> = adminKey ? { 'X-Admin-Key': adminKey } : {};
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
