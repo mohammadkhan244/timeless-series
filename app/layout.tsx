@@ -33,20 +33,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex items-center justify-between h-14">
               <Link
                 href="/"
-                className="font-serif text-lg tracking-wider text-copper hover:text-copper-light transition-colors"
+                className="font-serif text-lg tracking-wider text-text hover:text-copper transition-colors"
               >
                 Timeless Series
               </Link>
               <div className="flex items-center gap-7">
                 <Link
                   href="/submit"
-                  className="text-[11px] uppercase tracking-widest text-text-muted hover:text-text transition-colors"
+                  className="text-[11px] uppercase tracking-widest text-text-muted hover:text-copper transition-colors"
                 >
                   Submit
                 </Link>
                 <Link
                   href="/admin"
-                  className="text-[11px] uppercase tracking-widest text-text-muted hover:text-text transition-colors"
+                  className="text-[11px] uppercase tracking-widest text-text-muted hover:text-copper transition-colors"
                 >
                   Admin
                 </Link>

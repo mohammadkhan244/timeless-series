@@ -10,7 +10,7 @@ function countSentences(text: string): number {
 }
 
 const FIELD =
-  'w-full bg-surface border border-border text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/60 transition-colors';
+  'w-full bg-input border border-[rgba(240,236,228,0.15)] text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/60 transition-colors';
 const LABEL = 'block text-[11px] uppercase tracking-widest text-text-muted mb-2';
 const ERR = 'mt-1.5 text-xs text-red-400';
 
@@ -221,7 +221,7 @@ export default function SubmitForm() {
       <div>
         <label className={LABEL}>Cover Image</label>
         <div className="flex gap-5">
-          <div className="w-20 h-28 bg-surface-2 border border-border flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-28 bg-input border border-[rgba(240,236,228,0.15)] flex-shrink-0 flex items-center justify-center overflow-hidden">
             {coverLoading ? (
               <span className="text-[10px] text-text-muted text-center px-1">Fetching…</span>
             ) : displayCover ? (

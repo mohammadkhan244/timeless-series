@@ -38,7 +38,7 @@ export default function FilterBar({
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder="Search by title, author, or category…"
-        className="w-full bg-surface border border-border text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/50 transition-colors"
+        className="w-full bg-input border border-[rgba(240,236,228,0.15)] text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/50 transition-colors"
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -74,7 +74,7 @@ export default function FilterBar({
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="bg-surface border border-border text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
+          className="bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((c) => (
@@ -87,7 +87,7 @@ export default function FilterBar({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as 'newest' | 'oldest')}
-          className="bg-surface border border-border text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
+          className="bg-input border border-[rgba(240,236,228,0.15)] text-sm text-text px-3 py-1.5 focus:outline-none focus:border-copper/50 cursor-pointer transition-colors"
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>

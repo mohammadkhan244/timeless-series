@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
             placeholder="Admin password"
             autoFocus
             autoComplete="current-password"
-            className="w-full bg-surface border border-border text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/60 transition-colors"
+            className="w-full bg-input border border-[rgba(240,236,228,0.15)] text-text placeholder:text-text-muted px-4 py-3 text-sm focus:outline-none focus:border-copper/60 transition-colors"
           />
           <button
             type="submit"

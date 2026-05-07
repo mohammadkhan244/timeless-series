@@ -187,14 +187,14 @@ export default function AdminPanel() {
                           <button
                             onClick={() => updateStatus(entry.id, 'approved')}
                             disabled={updating === entry.id}
-                            className="text-[11px] px-3 py-1.5 bg-green-900/30 text-green-400 border border-green-700/30 hover:bg-green-900/50 transition-colors disabled:opacity-40"
+                            className="text-[11px] px-3 py-1.5 bg-copper text-bg hover:bg-copper-light transition-colors disabled:opacity-40"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => updateStatus(entry.id, 'rejected')}
                             disabled={updating === entry.id}
-                            className="text-[11px] px-3 py-1.5 bg-red-900/20 text-red-400 border border-red-700/20 hover:bg-red-900/40 transition-colors disabled:opacity-40"
+                            className="text-[11px] px-3 py-1.5 bg-transparent text-red-400 border border-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40"
                           >
                             Reject
                           </button>
@@ -202,7 +202,7 @@ export default function AdminPanel() {
                       )}
                       {entry.status === 'approved' && (
                         <>
-                          <span className="text-[11px] text-green-400">Approved</span>
+                          <span className="text-[11px] text-copper">Approved</span>
                           <button
                             onClick={() => updateStatus(entry.id, 'rejected')}
                             disabled={updating === entry.id}
@@ -218,7 +218,7 @@ export default function AdminPanel() {
                           <button
                             onClick={() => updateStatus(entry.id, 'approved')}
                             disabled={updating === entry.id}
-                            className="text-[11px] text-text-muted hover:text-green-400 transition-colors disabled:opacity-40"
+                            className="text-[11px] text-text-muted hover:text-copper transition-colors disabled:opacity-40"
                           >
                             Approve
                           </button>

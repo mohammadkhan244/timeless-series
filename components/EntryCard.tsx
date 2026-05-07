@@ -12,7 +12,7 @@ const MEDIUM_LABELS: Record<string, string> = {
 export default function EntryCard({ entry }: { entry: Entry }) {
   return (
     <Link href={`/entry/${entry.id}`} className="group block">
-      <div className="bg-surface border border-border rounded-sm overflow-hidden transition-all duration-300 hover:border-copper/50 hover:shadow-xl hover:shadow-copper/5 h-full flex flex-col">
+      <div className="bg-surface border border-border overflow-hidden transition-all duration-300 hover:border-copper/50 hover:shadow-xl hover:shadow-copper/5 hover:-translate-y-0.5 h-full flex flex-col">
         {/* Cover */}
         <div className="relative aspect-[2/3] overflow-hidden bg-surface-2 flex-shrink-0">
           {entry.cover_image ? (
