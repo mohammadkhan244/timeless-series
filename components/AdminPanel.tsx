@@ -18,8 +18,9 @@ function formatDate(iso: string) {
   });
 }
 
-export default function AdminPanel() {
+export default function AdminPanel({ adminKey }: { adminKey?: string }) {
   const router = useRouter();
+  const adminHeaders = adminKey ? { 'X-Admin-Key': adminKey } : {};
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -31,7 +32,7 @@ export default function AdminPanel() {
     setLoading(true);
     setFetchError('');
     try {
-      const res = await fetch('/api/admin/entries');
+      const res = await fetch('/api/admin/entries', { headers: adminHeaders });
       if (!res.ok) throw new Error('Unauthorized or server error');
       const data = await res.json();
       setEntries(data);
@@ -51,7 +52,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`/api/admin/entries/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...adminHeaders },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Failed');

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Admin',
 };
 
-async function verifyAdmin(): Promise<boolean> {
+async function verifySession(): Promise<boolean> {
   const cookieStore = await cookies();
   const token = cookieStore.get('admin_session')?.value;
   if (!token || !process.env.ADMIN_PASSWORD) return false;
@@ -21,13 +21,21 @@ async function verifyAdmin(): Promise<boolean> {
   }
 }
 
-export default async function AdminPage() {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) redirect('/admin/login');
+interface Props {
+  searchParams: Promise<{ key?: string }>;
+}
+
+export default async function AdminPage({ searchParams }: Props) {
+  const { key } = await searchParams;
+
+  const keyOk = key && process.env.ADMIN_PASSWORD && key === process.env.ADMIN_PASSWORD;
+  const sessionOk = await verifySession();
+
+  if (!keyOk && !sessionOk) redirect('/admin/login');
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <AdminPanel />
+      <AdminPanel adminKey={keyOk ? key : undefined} />
     </div>
   );
 }

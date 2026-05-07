@@ -20,9 +20,9 @@ interface Suggestion {
 }
 
 export default function SubmitForm() {
+  const [medium, setMedium] = useState<Medium | ''>('');
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
-  const [medium, setMedium] = useState<Medium | ''>('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [note, setNote] = useState('');
   const [contributorName, setContributorName] = useState('');
@@ -37,6 +37,7 @@ export default function SubmitForm() {
   const [canonicalTitle, setCanonicalTitle] = useState<string | null>(null);
   const [canonicalAuthor, setCanonicalAuthor] = useState<string | null>(null);
   const [coverSuggestions, setCoverSuggestions] = useState<Suggestion[]>([]);
+  const [autoFilled, setAutoFilled] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +56,7 @@ export default function SubmitForm() {
       setCanonicalTitle(null);
       setCanonicalAuthor(null);
       setCoverSuggestions([]);
+      setAutoFilled(false);
       try {
         const params = new URLSearchParams({ title, medium });
         const res = await fetch(`/api/cover?${params}`);
@@ -79,11 +81,21 @@ export default function SubmitForm() {
   function applySuggestion(s: Suggestion) {
     setTitle(s.title);
     if (s.author) setAuthor(s.author);
+    setAutoFilled(true);
     setCoverOverride('');
     setCoverConfirmed(false);
     setCanonicalTitle(null);
     setCanonicalAuthor(null);
     setCoverSuggestions([]);
+  }
+
+  function handleCoverConfirm(checked: boolean) {
+    setCoverConfirmed(checked);
+    if (checked && !autoFilled) {
+      if (canonicalTitle && !title.trim()) setTitle(canonicalTitle);
+      if (canonicalAuthor && !author.trim()) setAuthor(canonicalAuthor);
+      if (canonicalTitle || canonicalAuthor) setAutoFilled(true);
+    }
   }
 
   function toggleCategory(cat: Category) {
@@ -101,11 +113,14 @@ export default function SubmitForm() {
     title.trim().length > 0 &&
     canonicalTitle.toLowerCase() !== title.toLowerCase().trim();
 
+  const showSuggestions =
+    titleDiffers || (!coverLoading && coverFailed && coverSuggestions.length > 0);
+
   function validate(): boolean {
     const e: Record<string, string> = {};
+    if (!medium) e.medium = 'Select a medium';
     if (!title.trim()) e.title = 'Required';
     if (!author.trim()) e.author = 'Required';
-    if (!medium) e.medium = 'Select a medium';
     if (categories.length === 0) e.category = 'Select at least one category';
     if (displayCover && !coverConfirmed) e.cover = 'Please confirm this is the right cover';
     if (!note.trim()) {
@@ -156,11 +171,11 @@ export default function SubmitForm() {
   }
 
   function resetForm() {
-    setTitle(''); setAuthor(''); setMedium(''); setCategories([]);
+    setMedium(''); setTitle(''); setAuthor(''); setCategories([]);
     setNote(''); setContributorName(''); setArticleLink(''); setAccessCode('');
     setCoverUrl(''); setCoverOverride(''); setCoverFailed(false); setCoverConfirmed(false);
     setCanonicalTitle(null); setCanonicalAuthor(null); setCoverSuggestions([]);
-    setErrors({}); setSuccess(false);
+    setAutoFilled(false); setErrors({}); setSuccess(false);
   }
 
   if (success) {
@@ -186,7 +201,25 @@ export default function SubmitForm() {
         </div>
       )}
 
-      {/* 1. Title */}
+      {/* 1. Medium — first so cover fetch knows what API to use */}
+      <div>
+        <label className={LABEL}>Medium</label>
+        <select
+          value={medium}
+          onChange={(e) => setMedium(e.target.value as Medium)}
+          className={`${FIELD} cursor-pointer`}
+        >
+          <option value="">Is it a book, film, or TV show?</option>
+          {MEDIUMS.map((m) => (
+            <option key={m} value={m}>
+              {m === 'tv show' ? 'TV Show' : m.charAt(0).toUpperCase() + m.slice(1)}
+            </option>
+          ))}
+        </select>
+        {errors.medium && <p className={ERR}>{errors.medium}</p>}
+      </div>
+
+      {/* 2. Title — with "Did you mean" suggestions right below */}
       <div>
         <label className={LABEL}>Title</label>
         <input
@@ -196,10 +229,42 @@ export default function SubmitForm() {
           placeholder="Enter title…"
           className={FIELD}
         />
+        {showSuggestions && (
+          <div className="mt-2 space-y-1">
+            {titleDiffers && (
+              <button
+                type="button"
+                onClick={() =>
+                  applySuggestion({ title: canonicalTitle!, author: canonicalAuthor ?? undefined })
+                }
+                className="block text-xs text-left text-text-muted hover:text-copper transition-colors"
+              >
+                Did you mean{' '}
+                <span className="text-copper">&ldquo;{canonicalTitle}&rdquo;</span>
+                {canonicalAuthor && <span> by {canonicalAuthor}</span>}?
+              </button>
+            )}
+            {!titleDiffers && coverFailed && coverSuggestions.length > 0 && (
+              <>
+                <p className="text-xs text-text-muted">Did you mean:</p>
+                {coverSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => applySuggestion(s)}
+                    className="block text-xs text-copper hover:underline text-left"
+                  >
+                    &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        )}
         {errors.title && <p className={ERR}>{errors.title}</p>}
       </div>
 
-      {/* 2. Author */}
+      {/* 3. Author — auto-filled via suggestion click or cover confirm */}
       <div>
         <label className={LABEL}>Author / Director / Creator</label>
         <input
@@ -212,31 +277,10 @@ export default function SubmitForm() {
         {errors.author && <p className={ERR}>{errors.author}</p>}
       </div>
 
-      {/* 3. Medium */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label className={LABEL}>Medium</label>
-          <select
-            value={medium}
-            onChange={(e) => setMedium(e.target.value as Medium)}
-            className={`${FIELD} cursor-pointer`}
-          >
-            <option value="">Select medium…</option>
-            {MEDIUMS.map((m) => (
-              <option key={m} value={m}>
-                {m === 'tv show' ? 'TV Show' : m.charAt(0).toUpperCase() + m.slice(1)}
-              </option>
-            ))}
-          </select>
-          {errors.medium && <p className={ERR}>{errors.medium}</p>}
-        </div>
-      </div>
-
-      {/* Cover — auto-fetches on title + medium, user confirms */}
+      {/* 4. Cover */}
       <div>
         <label className={LABEL}>Cover Image</label>
         <div className="flex gap-5">
-          {/* Preview */}
           <div className="w-20 h-28 bg-input border border-[rgba(240,236,228,0.15)] flex-shrink-0 flex items-center justify-center overflow-hidden">
             {coverLoading ? (
               <span className="text-[10px] text-text-muted text-center px-1">Fetching…</span>
@@ -254,47 +298,12 @@ export default function SubmitForm() {
               Auto-fetched from Open Library (books) or TMDB (film/TV) as you type.
             </p>
 
-            {/* Did you mean — canonical title differs */}
-            {titleDiffers && (
-              <p className="text-xs text-text-muted">
-                Did you mean{' '}
-                <button
-                  type="button"
-                  onClick={() =>
-                    applySuggestion({ title: canonicalTitle!, author: canonicalAuthor ?? undefined })
-                  }
-                  className="text-copper hover:underline"
-                >
-                  &ldquo;{canonicalTitle}&rdquo;
-                </button>
-                {canonicalAuthor && ` by ${canonicalAuthor}`}?
-              </p>
-            )}
-
-            {/* Did you mean — not found, show alternatives */}
-            {!coverLoading && coverFailed && coverSuggestions.length > 0 && (
-              <div className="text-xs text-text-muted space-y-0.5">
-                <p>Did you mean:</p>
-                {coverSuggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => applySuggestion(s)}
-                    className="block text-copper hover:underline text-left"
-                  >
-                    &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Confirm checkbox */}
             {displayCover && (
               <label className="flex items-center gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={coverConfirmed}
-                  onChange={(e) => setCoverConfirmed(e.target.checked)}
+                  onChange={(e) => handleCoverConfirm(e.target.checked)}
                   style={{ accentColor: '#b87333', width: 14, height: 14 }}
                 />
                 <span className="text-xs text-text-muted">Is this the right cover?</span>
@@ -302,7 +311,6 @@ export default function SubmitForm() {
             )}
             {errors.cover && <p className={ERR}>{errors.cover}</p>}
 
-            {/* Manual override */}
             {(coverFailed || displayCover) && (
               <div>
                 <input
@@ -330,7 +338,7 @@ export default function SubmitForm() {
         </div>
       </div>
 
-      {/* 4. Category — multi-select toggle pills */}
+      {/* 5. Category */}
       <div>
         <label className={LABEL}>
           Category{' '}
@@ -358,7 +366,7 @@ export default function SubmitForm() {
         {errors.category && <p className={ERR}>{errors.category}</p>}
       </div>
 
-      {/* 5. Why it belongs here */}
+      {/* 6. Why it belongs here */}
       <div>
         <div className="flex items-start justify-between mb-2">
           <div>
@@ -385,7 +393,7 @@ export default function SubmitForm() {
         {errors.note && <p className={ERR}>{errors.note}</p>}
       </div>
 
-      {/* 6 + 7. Optional fields */}
+      {/* 7. Optional fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className={LABEL}>
