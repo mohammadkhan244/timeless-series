@@ -21,7 +21,7 @@ export default function Gallery({ entries }: { entries: Entry[] }) {
           return (
             e.title.toLowerCase().includes(s) ||
             e.author.toLowerCase().includes(s) ||
-            e.category.toLowerCase().includes(s) ||
+            e.category.some((cat) => cat.toLowerCase().includes(s)) ||
             e.contributor_name.toLowerCase().includes(s)
           );
         }
