@@ -29,9 +29,11 @@ export default function SubmitForm() {
   const [articleLink, setArticleLink] = useState('');
   const [accessCode, setAccessCode] = useState('');
 
-  // Cover: fetched silently, never shown as a field
   const [coverUrl, setCoverUrl] = useState('');
+  const [coverOverride, setCoverOverride] = useState('');
   const [coverLoading, setCoverLoading] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
+  const [coverConfirmed, setCoverConfirmed] = useState(false);
   const [canonicalTitle, setCanonicalTitle] = useState<string | null>(null);
   const [canonicalAuthor, setCanonicalAuthor] = useState<string | null>(null);
   const [coverSuggestions, setCoverSuggestions] = useState<Suggestion[]>([]);
@@ -42,13 +44,14 @@ export default function SubmitForm() {
 
   const debounce = useRef<ReturnType<typeof setTimeout>>();
 
-  // Silently fetch cover + canonical name whenever title or medium changes
   useEffect(() => {
-    if (!title || !medium) return;
+    if (!title || !medium || coverOverride) return;
     clearTimeout(debounce.current);
     debounce.current = setTimeout(async () => {
       setCoverLoading(true);
+      setCoverFailed(false);
       setCoverUrl('');
+      setCoverConfirmed(false);
       setCanonicalTitle(null);
       setCanonicalAuthor(null);
       setCoverSuggestions([]);
@@ -56,22 +59,28 @@ export default function SubmitForm() {
         const params = new URLSearchParams({ title, medium });
         const res = await fetch(`/api/cover?${params}`);
         const data = await res.json();
-        if (data.url) setCoverUrl(data.url);
+        if (data.url) {
+          setCoverUrl(data.url);
+        } else {
+          setCoverFailed(true);
+        }
         setCanonicalTitle(data.canonicalTitle ?? null);
         setCanonicalAuthor(data.canonicalAuthor ?? null);
         setCoverSuggestions(data.suggestions ?? []);
       } catch {
-        // cover is optional — silent failure is fine
+        setCoverFailed(true);
       } finally {
         setCoverLoading(false);
       }
     }, 800);
     return () => clearTimeout(debounce.current);
-  }, [title, medium]);
+  }, [title, medium, coverOverride]);
 
   function applySuggestion(s: Suggestion) {
     setTitle(s.title);
     if (s.author) setAuthor(s.author);
+    setCoverOverride('');
+    setCoverConfirmed(false);
     setCanonicalTitle(null);
     setCanonicalAuthor(null);
     setCoverSuggestions([]);
@@ -83,6 +92,7 @@ export default function SubmitForm() {
     );
   }
 
+  const displayCover = coverOverride || coverUrl;
   const noteCount = countSentences(note);
 
   const titleDiffers =
@@ -97,6 +107,7 @@ export default function SubmitForm() {
     if (!author.trim()) e.author = 'Required';
     if (!medium) e.medium = 'Select a medium';
     if (categories.length === 0) e.category = 'Select at least one category';
+    if (displayCover && !coverConfirmed) e.cover = 'Please confirm this is the right cover';
     if (!note.trim()) {
       e.note = 'Required';
     } else if (noteCount < 2) {
@@ -124,7 +135,7 @@ export default function SubmitForm() {
           author: author.trim(),
           medium,
           category: categories,
-          cover_image: coverUrl || null,
+          cover_image: coverOverride.trim() || coverUrl || null,
           timelessness_note: note.trim(),
           contributor_name: contributorName.trim() || 'Anonymous',
           article_link: articleLink.trim() || null,
@@ -147,8 +158,9 @@ export default function SubmitForm() {
   function resetForm() {
     setTitle(''); setAuthor(''); setMedium(''); setCategories([]);
     setNote(''); setContributorName(''); setArticleLink(''); setAccessCode('');
-    setCoverUrl(''); setCanonicalTitle(null); setCanonicalAuthor(null);
-    setCoverSuggestions([]); setErrors({}); setSuccess(false);
+    setCoverUrl(''); setCoverOverride(''); setCoverFailed(false); setCoverConfirmed(false);
+    setCanonicalTitle(null); setCanonicalAuthor(null); setCoverSuggestions([]);
+    setErrors({}); setSuccess(false);
   }
 
   if (success) {
@@ -185,36 +197,6 @@ export default function SubmitForm() {
           className={FIELD}
         />
         {errors.title && <p className={ERR}>{errors.title}</p>}
-
-        {/* Typo suggestions — appear once title+medium resolve against the API */}
-        {titleDiffers && (
-          <p className="mt-1.5 text-xs text-text-muted">
-            Did you mean{' '}
-            <button
-              type="button"
-              onClick={() => applySuggestion({ title: canonicalTitle!, author: canonicalAuthor ?? undefined })}
-              className="text-copper hover:underline"
-            >
-              &ldquo;{canonicalTitle}&rdquo;
-            </button>
-            {canonicalAuthor && ` by ${canonicalAuthor}`}?
-          </p>
-        )}
-        {!coverLoading && !titleDiffers && coverSuggestions.length > 0 && (
-          <div className="mt-1.5 text-xs text-text-muted space-y-0.5">
-            <span>Did you mean: </span>
-            {coverSuggestions.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => applySuggestion(s)}
-                className="block text-copper hover:underline text-left"
-              >
-                &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* 2. Author */}
@@ -247,6 +229,104 @@ export default function SubmitForm() {
             ))}
           </select>
           {errors.medium && <p className={ERR}>{errors.medium}</p>}
+        </div>
+      </div>
+
+      {/* Cover — auto-fetches on title + medium, user confirms */}
+      <div>
+        <label className={LABEL}>Cover Image</label>
+        <div className="flex gap-5">
+          {/* Preview */}
+          <div className="w-20 h-28 bg-input border border-[rgba(240,236,228,0.15)] flex-shrink-0 flex items-center justify-center overflow-hidden">
+            {coverLoading ? (
+              <span className="text-[10px] text-text-muted text-center px-1">Fetching…</span>
+            ) : displayCover ? (
+              <img src={displayCover} alt="Cover preview" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[10px] text-text-muted text-center px-1 leading-tight">
+                {coverFailed ? 'Not found' : 'Auto-fetched'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex-1 space-y-3">
+            <p className="text-xs text-text-muted leading-relaxed">
+              Auto-fetched from Open Library (books) or TMDB (film/TV) as you type.
+            </p>
+
+            {/* Did you mean — canonical title differs */}
+            {titleDiffers && (
+              <p className="text-xs text-text-muted">
+                Did you mean{' '}
+                <button
+                  type="button"
+                  onClick={() =>
+                    applySuggestion({ title: canonicalTitle!, author: canonicalAuthor ?? undefined })
+                  }
+                  className="text-copper hover:underline"
+                >
+                  &ldquo;{canonicalTitle}&rdquo;
+                </button>
+                {canonicalAuthor && ` by ${canonicalAuthor}`}?
+              </p>
+            )}
+
+            {/* Did you mean — not found, show alternatives */}
+            {!coverLoading && coverFailed && coverSuggestions.length > 0 && (
+              <div className="text-xs text-text-muted space-y-0.5">
+                <p>Did you mean:</p>
+                {coverSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => applySuggestion(s)}
+                    className="block text-copper hover:underline text-left"
+                  >
+                    &ldquo;{s.title}&rdquo;{s.author && ` by ${s.author}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Confirm checkbox */}
+            {displayCover && (
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={coverConfirmed}
+                  onChange={(e) => setCoverConfirmed(e.target.checked)}
+                  style={{ accentColor: '#b87333', width: 14, height: 14 }}
+                />
+                <span className="text-xs text-text-muted">Is this the right cover?</span>
+              </label>
+            )}
+            {errors.cover && <p className={ERR}>{errors.cover}</p>}
+
+            {/* Manual override */}
+            {(coverFailed || displayCover) && (
+              <div>
+                <input
+                  type="url"
+                  value={coverOverride}
+                  onChange={(e) => {
+                    setCoverOverride(e.target.value);
+                    setCoverConfirmed(false);
+                  }}
+                  placeholder="Paste a different image URL…"
+                  className={`${FIELD} text-xs`}
+                />
+                {coverOverride && (
+                  <button
+                    type="button"
+                    onClick={() => { setCoverOverride(''); setCoverConfirmed(false); }}
+                    className="mt-1.5 text-[11px] text-text-muted hover:text-copper transition-colors"
+                  >
+                    Clear override
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
