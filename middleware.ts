@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === '/admin/login') {
@@ -26,6 +26,6 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-export const proxyConfig = {
+export const config = {
   matcher: ['/admin/:path*'],
 };
