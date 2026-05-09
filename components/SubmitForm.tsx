@@ -15,9 +15,11 @@ const FIELD =
 const LABEL = 'block text-[11px] uppercase tracking-widest text-text-muted mb-2';
 const ERR = 'mt-1.5 text-xs text-red-400';
 
-interface Suggestion {
+interface CoverMatch {
   title: string;
   author?: string;
+  year?: string;
+  coverUrl: string | null;
 }
 
 export default function SubmitForm() {
@@ -30,20 +32,10 @@ export default function SubmitForm() {
   const [articleLink, setArticleLink] = useState('');
   const [accessCode, setAccessCode] = useState('');
 
-  const [coverUrl, setCoverUrl] = useState('');
+  const [coverMatches, setCoverMatches] = useState<CoverMatch[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<CoverMatch | null>(null);
   const [coverOverride, setCoverOverride] = useState('');
   const [coverLoading, setCoverLoading] = useState(false);
-  const [coverFailed, setCoverFailed] = useState(false);
-  const [coverConfirmed, setCoverConfirmed] = useState(false);
-  const [canonicalTitle, setCanonicalTitle] = useState<string | null>(null);
-  const [canonicalAuthor, setCanonicalAuthor] = useState<string | null>(null);
-  const [coverSuggestions, setCoverSuggestions] = useState<Suggestion[]>([]);
-  const [autoFilled, setAutoFilled] = useState(false);
-
-  // Dropdown
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const titleWrapRef = useRef<HTMLDivElement>(null);
-  const justAppliedRef = useRef(false);
 
   // Voice-to-text
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -56,77 +48,60 @@ export default function SubmitForm() {
   const [success, setSuccess] = useState(false);
 
   const debounce = useRef<ReturnType<typeof setTimeout>>();
+  const justSelectedRef = useRef(false);
+  const authorRef = useRef('');
+  const lastAutoFilledAuthorRef = useRef('');
+  useEffect(() => { authorRef.current = author; }, [author]);
 
   useEffect(() => {
     setSpeechSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   }, []);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (titleWrapRef.current && !titleWrapRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!title || !medium || coverOverride) return;
     clearTimeout(debounce.current);
+    if (!title.trim() || !medium) {
+      setCoverMatches([]);
+      setCoverLoading(false);
+      return;
+    }
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
     debounce.current = setTimeout(async () => {
-      const wasJustApplied = justAppliedRef.current;
-      justAppliedRef.current = false;
-
       setCoverLoading(true);
-      setCoverFailed(false);
-      setCoverUrl('');
-      setCoverConfirmed(false);
-      setCanonicalTitle(null);
-      setCanonicalAuthor(null);
-      setCoverSuggestions([]);
-      setAutoFilled(false);
+      setCoverMatches([]);
       try {
         const params = new URLSearchParams({ title, medium });
         const res = await fetch(`/api/cover?${params}`);
         const data = await res.json();
-        if (data.url) setCoverUrl(data.url);
-        else setCoverFailed(true);
-        setCanonicalTitle(data.canonicalTitle ?? null);
-        setCanonicalAuthor(data.canonicalAuthor ?? null);
-        setCoverSuggestions(data.suggestions ?? []);
-        if (!wasJustApplied && (data.canonicalTitle || data.suggestions?.length > 0)) {
-          setDropdownOpen(true);
+        const matches: CoverMatch[] = data.matches ?? [];
+        setCoverMatches(matches);
+        // Auto-fill author from first result if field is still empty
+        const firstAuthor = matches[0]?.author;
+        // Auto-fill if author is empty or still matches what we last auto-filled
+        if (firstAuthor && (!authorRef.current || authorRef.current === lastAutoFilledAuthorRef.current)) {
+          setAuthor(firstAuthor);
+          lastAutoFilledAuthorRef.current = firstAuthor;
         }
       } catch {
-        setCoverFailed(true);
+        setCoverMatches([]);
       } finally {
         setCoverLoading(false);
       }
-    }, 400);
+    }, 600);
     return () => clearTimeout(debounce.current);
-  }, [title, medium, coverOverride]);
+  }, [title, medium]);
 
-  function applySuggestion(s: Suggestion) {
-    justAppliedRef.current = true;
-    setTitle(s.title);
-    if (s.author) setAuthor(s.author);
-    setAutoFilled(true);
-    setCoverOverride('');
-    setCoverConfirmed(false);
-    setCanonicalTitle(null);
-    setCanonicalAuthor(null);
-    setCoverSuggestions([]);
-    setDropdownOpen(false);
-  }
-
-  function handleCoverConfirm(checked: boolean) {
-    setCoverConfirmed(checked);
-    if (checked && !autoFilled) {
-      if (canonicalTitle && !title.trim()) setTitle(canonicalTitle);
-      if (canonicalAuthor && !author.trim()) setAuthor(canonicalAuthor);
-      if (canonicalTitle || canonicalAuthor) setAutoFilled(true);
+  function selectMatch(match: CoverMatch) {
+    justSelectedRef.current = true;
+    setSelectedMatch(match);
+    setTitle(match.title);
+    if (match.author) {
+      setAuthor(match.author);
+      lastAutoFilledAuthorRef.current = match.author;
     }
+    setCoverOverride('');
   }
 
   function toggleCategory(cat: Category) {
@@ -162,19 +137,9 @@ export default function SubmitForm() {
     setListening(true);
   }
 
-  const displayCover = coverOverride || coverUrl;
+  const displayCover = coverOverride || selectedMatch?.coverUrl || null;
   const wordCount = countWords(note);
-
-  // Dropdown items: canonical first, then additional suggestions (deduplicated)
-  const dropdownItems: Suggestion[] = [];
-  if (canonicalTitle) {
-    dropdownItems.push({ title: canonicalTitle, author: canonicalAuthor ?? undefined });
-  }
-  for (const s of coverSuggestions) {
-    if (!dropdownItems.find((d) => d.title.toLowerCase() === s.title.toLowerCase())) {
-      dropdownItems.push(s);
-    }
-  }
+  const noResults = !coverLoading && title.trim() !== '' && medium !== '' && coverMatches.length === 0;
 
   function validate(): boolean {
     const e: Record<string, string> = {};
@@ -182,7 +147,6 @@ export default function SubmitForm() {
     if (!title.trim()) e.title = 'Required';
     if (!author.trim()) e.author = 'Required';
     if (categories.length === 0) e.category = 'Select at least one category';
-    if (displayCover && !coverConfirmed) e.cover = 'Please confirm this is the right cover';
     if (!note.trim()) {
       e.note = 'Required';
     } else if (wordCount < MIN_WORDS) {
@@ -210,7 +174,7 @@ export default function SubmitForm() {
           author: author.trim(),
           medium,
           category: categories,
-          cover_image: coverOverride.trim() || coverUrl || null,
+          cover_image: coverOverride.trim() || selectedMatch?.coverUrl || null,
           timelessness_note: note.trim(),
           contributor_name: contributorName.trim() || 'Anonymous',
           article_link: articleLink.trim() || null,
@@ -233,9 +197,9 @@ export default function SubmitForm() {
   function resetForm() {
     setMedium(''); setTitle(''); setAuthor(''); setCategories([]);
     setNote(''); setContributorName(''); setArticleLink(''); setAccessCode('');
-    setCoverUrl(''); setCoverOverride(''); setCoverFailed(false); setCoverConfirmed(false);
-    setCanonicalTitle(null); setCanonicalAuthor(null); setCoverSuggestions([]);
-    setAutoFilled(false); setErrors({}); setSuccess(false); setDropdownOpen(false);
+    setCoverMatches([]); setSelectedMatch(null); setCoverOverride(''); setCoverLoading(false);
+    lastAutoFilledAuthorRef.current = '';
+    setErrors({}); setSuccess(false);
     if (listening) { recognitionRef.current?.stop(); setListening(false); }
   }
 
@@ -286,19 +250,21 @@ export default function SubmitForm() {
           !medium ? 'opacity-30 pointer-events-none select-none' : ''
         }`}
       >
-        {/* 2. Title — live dropdown */}
-        <div ref={titleWrapRef} className="relative">
+        {/* 2. Title */}
+        <div>
           <label className={LABEL}>Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              setAutoFilled(false);
-              if (!e.target.value.trim()) setDropdownOpen(false);
-            }}
-            onFocus={() => {
-              if (dropdownItems.length > 0) setDropdownOpen(true);
+              setSelectedMatch(null);
+              // If author was auto-filled and not manually edited, clear it so the
+              // next search result can auto-fill again
+              if (authorRef.current === lastAutoFilledAuthorRef.current) {
+                setAuthor('');
+                lastAutoFilledAuthorRef.current = '';
+              }
             }}
             placeholder="Enter title…"
             className={FIELD}
@@ -307,28 +273,67 @@ export default function SubmitForm() {
           {coverLoading && (
             <p className="mt-1.5 text-xs text-text-muted">Searching…</p>
           )}
-          {dropdownOpen && dropdownItems.length > 0 && (
-            <div className="absolute z-20 top-full left-0 right-0 mt-0.5 bg-surface border border-[rgba(240,236,228,0.15)] shadow-xl overflow-hidden">
-              {dropdownItems.map((item, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    applySuggestion(item);
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-copper/10 transition-colors border-b border-[rgba(240,236,228,0.08)] last:border-b-0"
-                >
-                  <span className="text-text">{item.title}</span>
-                  {item.author && (
-                    <span className="text-text-muted text-xs ml-2">by {item.author}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
           {errors.title && <p className={ERR}>{errors.title}</p>}
         </div>
+
+        {/* Cover grid — appears when matches are available */}
+        {coverMatches.length > 0 && (
+          <div>
+            <p className={LABEL}>Select a cover</p>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+              {coverMatches.map((match, i) => {
+                const isSelected =
+                  selectedMatch?.coverUrl === match.coverUrl &&
+                  selectedMatch?.title === match.title;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectMatch(match)}
+                    className="group text-left"
+                  >
+                    <div
+                      className={`relative aspect-[2/3] overflow-hidden bg-input border-2 transition-colors ${
+                        isSelected
+                          ? 'border-copper'
+                          : 'border-transparent group-hover:border-copper/40'
+                      }`}
+                    >
+                      {match.coverUrl && (
+                        <img
+                          src={match.coverUrl}
+                          alt={match.title}
+                          className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                        />
+                      )}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-copper/10 pointer-events-none" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-text mt-1 leading-tight line-clamp-2">
+                      {match.title}
+                    </p>
+                    {match.year && (
+                      <p className="text-[10px] text-text-muted">{match.year}</p>
+                    )}
+                    {match.author && (
+                      <p className="text-[10px] text-text-muted truncate">{match.author}</p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedMatch && (
+              <button
+                type="button"
+                onClick={() => setSelectedMatch(null)}
+                className="mt-3 text-[11px] text-text-muted hover:text-copper transition-colors"
+              >
+                Clear selection
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 3. Author */}
         <div>
@@ -354,48 +359,48 @@ export default function SubmitForm() {
                 <img src={displayCover} alt="Cover preview" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[10px] text-text-muted text-center px-1 leading-tight">
-                  {coverFailed ? 'Not found' : 'Auto-fetched'}
+                  {noResults ? 'Not found' : 'Auto-fetched'}
                 </span>
               )}
             </div>
             <div className="flex-1 space-y-3">
-              <p className="text-xs text-text-muted leading-relaxed">
-                Auto-fetched from Open Library (books) or TMDB (film/TV) as you type.
-              </p>
-              {displayCover && (
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={coverConfirmed}
-                    onChange={(e) => handleCoverConfirm(e.target.checked)}
-                    style={{ accentColor: '#b87333', width: 14, height: 14 }}
-                  />
-                  <span className="text-xs text-text-muted">Is this the right cover?</span>
-                </label>
-              )}
-              {errors.cover && <p className={ERR}>{errors.cover}</p>}
-              {(coverFailed || displayCover) && (
+              {selectedMatch ? (
                 <div>
-                  <input
-                    type="url"
-                    value={coverOverride}
-                    onChange={(e) => {
-                      setCoverOverride(e.target.value);
-                      setCoverConfirmed(false);
-                    }}
-                    placeholder="Paste a different image URL…"
-                    className={`${FIELD} text-xs`}
-                  />
-                  {coverOverride && (
-                    <button
-                      type="button"
-                      onClick={() => { setCoverOverride(''); setCoverConfirmed(false); }}
-                      className="mt-1.5 text-[11px] text-text-muted hover:text-copper transition-colors"
-                    >
-                      Clear override
-                    </button>
+                  <p className="text-xs text-text leading-snug">{selectedMatch.title}</p>
+                  {selectedMatch.author && (
+                    <p className="text-xs text-text-muted">by {selectedMatch.author}</p>
+                  )}
+                  {selectedMatch.year && (
+                    <p className="text-xs text-text-muted">{selectedMatch.year}</p>
                   )}
                 </div>
+              ) : (
+                <p className="text-xs text-text-muted leading-relaxed">
+                  {coverMatches.length > 0
+                    ? 'Select a cover from the grid above, or paste a URL.'
+                    : noResults
+                    ? 'No cover found automatically.'
+                    : 'Auto-fetched from Open Library (books) or TMDB (film/TV) as you type.'}
+                </p>
+              )}
+              <input
+                type="url"
+                value={coverOverride}
+                onChange={(e) => {
+                  setCoverOverride(e.target.value);
+                  if (e.target.value) setSelectedMatch(null);
+                }}
+                placeholder="Paste a different image URL…"
+                className={`${FIELD} text-xs`}
+              />
+              {coverOverride && (
+                <button
+                  type="button"
+                  onClick={() => setCoverOverride('')}
+                  className="text-[11px] text-text-muted hover:text-copper transition-colors"
+                >
+                  Clear URL
+                </button>
               )}
             </div>
           </div>
