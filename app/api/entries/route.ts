@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { CATEGORIES } from '@/lib/categories';
 
-function countSentences(text: string): number {
-  if (!text.trim()) return 0;
-  return text.split(/[.!?]+/).filter((s) => s.trim().length > 2).length;
+const MIN_WORDS = 200;
+
+function countWords(text: string): number {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
 export async function GET() {
@@ -29,15 +30,7 @@ export async function POST(request: Request) {
     timelessness_note,
     contributor_name,
     article_link,
-    access_code,
   } = body;
-
-  if (!process.env.ACCESS_CODE) {
-    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
-  }
-  if (access_code !== process.env.ACCESS_CODE) {
-    return NextResponse.json({ error: 'Invalid access code' }, { status: 401 });
-  }
 
   if (!title?.trim() || !author?.trim() || !medium || !category || !timelessness_note?.trim()) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -55,9 +48,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
   }
 
-  if (countSentences(timelessness_note) < 2) {
+  if (countWords(timelessness_note) < MIN_WORDS) {
     return NextResponse.json(
-      { error: 'Note must contain at least 2 sentences' },
+      { error: `Note must be at least ${MIN_WORDS} words` },
       { status: 400 }
     );
   }

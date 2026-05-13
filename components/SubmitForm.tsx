@@ -30,7 +30,6 @@ export default function SubmitForm() {
   const [note, setNote] = useState('');
   const [contributorName, setContributorName] = useState('');
   const [articleLink, setArticleLink] = useState('');
-  const [accessCode, setAccessCode] = useState('');
 
   const [coverMatches, setCoverMatches] = useState<CoverMatch[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<CoverMatch | null>(null);
@@ -152,7 +151,6 @@ export default function SubmitForm() {
     } else if (wordCount < MIN_WORDS) {
       e.note = `Minimum ${MIN_WORDS} words — ${wordCount} written so far`;
     }
-    if (!accessCode.trim()) e.accessCode = 'Required';
     if (articleLink && !/^https?:\/\/.+/.test(articleLink)) {
       e.articleLink = 'Must be a valid URL starting with http(s)://';
     }
@@ -178,7 +176,6 @@ export default function SubmitForm() {
           timelessness_note: note.trim(),
           contributor_name: contributorName.trim() || 'Anonymous',
           article_link: articleLink.trim() || null,
-          access_code: accessCode.trim(),
         }),
       });
       const data = await res.json();
@@ -196,7 +193,7 @@ export default function SubmitForm() {
 
   function resetForm() {
     setMedium(''); setTitle(''); setAuthor(''); setCategories([]);
-    setNote(''); setContributorName(''); setArticleLink(''); setAccessCode('');
+    setNote(''); setContributorName(''); setArticleLink('');
     setCoverMatches([]); setSelectedMatch(null); setCoverOverride(''); setCoverLoading(false);
     lastAutoFilledAuthorRef.current = '';
     setErrors({}); setSuccess(false);
@@ -525,19 +522,6 @@ export default function SubmitForm() {
           </div>
         </div>
 
-        {/* 8. Access Code */}
-        <div>
-          <label className={LABEL}>Access Code</label>
-          <input
-            type="password"
-            value={accessCode}
-            onChange={(e) => setAccessCode(e.target.value)}
-            placeholder="Enter access code to submit"
-            className={FIELD}
-            autoComplete="off"
-          />
-          {errors.accessCode && <p className={ERR}>{errors.accessCode}</p>}
-        </div>
       </div>
 
       <button
