@@ -1,0 +1,15 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="38%" r="60%">
+      <stop offset="0%" stop-color="#17110a"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <!-- navigator's star -->
+  <path d="M 600 150 L 622 256 L 728 278 L 622 300 L 600 406 L 578 300 L 472 278 L 578 256 Z"
+        fill="#b87333"/>
+  <!-- wordmark, spaced caps, no tagline -->
+  <text x="600" y="500" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="92" letter-spacing="24" fill="#b87333">TIMELESS</text>
+</svg>
