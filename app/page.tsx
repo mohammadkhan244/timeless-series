@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CategoryCard from '@/components/CategoryCard';
+import ScrollCue from '@/components/ScrollCue';
 
 const STAR_PATH =
   'M 256 76 L 290 222 L 436 256 L 290 290 L 256 436 L 222 290 L 76 256 L 222 222 Z';
@@ -68,7 +69,7 @@ export default function LandingPage() {
   return (
     <>
       {/* ── 1. HERO ── */}
-      <section className="min-h-[calc(100vh-3.5rem)] flex flex-col items-center justify-center text-center px-6">
+      <section className="relative min-h-[calc(100vh-3.5rem)] flex flex-col items-center justify-center text-center px-6">
         <StarMark size={88} />
 
         <h1
@@ -102,6 +103,8 @@ export default function LandingPage() {
         >
           Enter the gallery
         </Link>
+
+        <ScrollCue targetId="about" />
       </section>
 
       {/* ── 2. WHAT IT IS ── */}

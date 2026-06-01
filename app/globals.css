@@ -10,7 +10,7 @@
   --color-input: #1a1a1a;
   --color-border: #222222;
   --color-text: #f0ece4;
-  --color-text-muted: #6b6560;
+  --color-text-muted: #b8b5af;
   --color-copper: #b87333;
   --color-copper-light: #cc8c4a;
 
@@ -23,7 +23,7 @@
   --bg:      #0a0a0a;
   --text:    #f0ece4;
   --accent:  #b87333;
-  --muted:   rgba(240, 236, 228, 0.4);
+  --muted:   rgba(240, 236, 228, 0.75);
   --card-bg: #111111;
   --border:  rgba(240, 236, 228, 0.1);
 }
@@ -93,4 +93,13 @@ select {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px !important;
+}
+
+/* ── Scroll cue bounce ── */
+@keyframes cue-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+.cue-bounce {
+  animation: cue-bounce 2.4s ease-in-out infinite;
 }
