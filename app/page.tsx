@@ -72,14 +72,28 @@ export default function LandingPage() {
         <StarMark size={88} />
 
         <h1
-          className="font-serif text-5xl sm:text-7xl text-copper mt-10 mb-6"
+          className="font-serif text-5xl sm:text-7xl text-copper mt-10 mb-8"
           style={{ letterSpacing: '0.22em' }}
         >
           TIMELESS
         </h1>
 
-        <p className="font-mono text-text text-base sm:text-lg tracking-wide mb-12">
+        {/* Hook */}
+        <p className="font-serif text-2xl sm:text-3xl text-text leading-snug max-w-lg mb-6">
           Not what&apos;s good. What lasts.
+        </p>
+
+        {/* Tension */}
+        <p className="text-text text-sm sm:text-base leading-relaxed max-w-md mb-4">
+          You&apos;re in a moment — grieving, starting over, trying to think clearly.
+          The internet ranks what&apos;s popular. This is the one place that asks what
+          will still matter in 100 years.
+        </p>
+
+        {/* Payoff */}
+        <p className="text-text-muted text-xs sm:text-sm leading-relaxed max-w-sm mb-12">
+          Ten human crises. Real people telling you which book, film, or show got them
+          through — and why.
         </p>
 
         <Link
