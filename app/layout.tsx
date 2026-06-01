@@ -17,16 +17,27 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Timeless Series',
-    template: '%s — Timeless Series',
+    default: 'Timeless',
+    template: '%s — Timeless',
   },
   description:
-    'A curated gallery of books, films, and TV shows — organized by the human experiences they illuminate.',
+    "Not what's good. What lasts. A human-curated database of books, films, and TV shows — organized by the human moment they prepare you for.",
+  openGraph: {
+    title: 'Timeless',
+    description: "Not what's good. What lasts.",
+    images: [{ url: '/timeless_og.png', width: 1200, height: 630, alt: 'Timeless' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Timeless',
+    description: "Not what's good. What lasts.",
+    images: ['/timeless_og.png'],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${inter.variable} scroll-smooth`}>
       <body
         className="bg-bg text-text min-h-screen font-sans"
         style={{ backgroundColor: '#0a0a0a', color: '#f0ece4' }}
@@ -38,9 +49,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 href="/"
                 className="font-serif text-lg tracking-wider text-text hover:text-copper transition-colors"
               >
-                Timeless Series
+                Timeless
               </Link>
               <div className="flex items-center gap-7">
+                <Link
+                  href="/gallery"
+                  className="text-[11px] uppercase tracking-widest text-text-muted hover:text-copper transition-colors"
+                >
+                  Gallery
+                </Link>
                 <Link
                   href="/submit"
                   className="text-[11px] uppercase tracking-widest text-text-muted hover:text-copper transition-colors"
